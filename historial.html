@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Evaluaciones - Calificador Web</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .history-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .evaluation-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .evaluation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .student-info h3 {
+            color: #333;
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .student-info p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+        }
+        
+        .score-badge {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 25px;
+            color: white;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .score-excellent { background: #28a745; }
+        .score-good { background: #ffc107; color: #333; }
+        .score-regular { background: #fd7e14; }
+        .score-poor { background: #dc3545; }
+        
+        .evaluation-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .detail-item strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .evaluation-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-history"></i>
+                <h1>Historial de Evaluaciones</h1>
+            </div>
+            <p class="subtitle">Registro de todas las evaluaciones realizadas</p>
+        </header>
+
+        <div class="history-container">
+            <div class="main-content">
+                <div class="actions" style="margin-bottom: 30px;">
+                    <a href="index.html" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Evaluador
+                    </a>
+                    <button id="exportAllBtn" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Exportar Todo (CSV)
+                    </button>
+                    <button id="clearHistoryBtn" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Limpiar Historial
+                    </button>
+                </div>
+
+                <div id="statsSection" class="stats-grid" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEvaluations">0</div>
+                        <div class="stat-label">Total Evaluaciones</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="averageScore">0.0</div>
+                        <div class="stat-label">Promedio General</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="excellentCount">0</div>
+                        <div class="stat-label">Excelentes (4.5+)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="failedCount">0</div>
+                        <div class="stat-label">Insuficientes (<3.0)</div>
+                    </div>
+                </div>
+
+                <div id="evaluationsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EvaluationHistory {
+            constructor() {
+                this.loadEvaluations();
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('exportAllBtn').addEventListener('click', () => this.exportAll());
+                document.getElementById('clearHistoryBtn').addEventListener('click', () => this.clearHistory());
+            }
+
+            loadEvaluations() {
+                const evaluations = JSON.parse(localStorage.getItem('projectEvaluations') || '[]');
+                this.displayEvaluations(evaluations);
+                this.updateStats(evaluations);
+            }
+
+            displayEvaluations(evaluations) {
+                const container = document.getElementById('evaluationsList');
+                
+                if (evaluations.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No hay evaluaciones guardadas</h3>
+                            <p>Las evaluaciones que guardes aparecerán aquí</p>
+                            <a href="index.html" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Crear Primera Evaluación
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Ordenar por fecha más reciente
+                evaluations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                container.innerHTML = evaluations.map(evaluation => {
+                    const date = new Date(evaluation.timestamp).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const scoreClass = this.getScoreClass(evaluation.score);
+                    const gradeStatus = this.getGradeStatus(evaluation.score);
+
+                    return `
+                        <div class="evaluation-card">
+                            <div class="evaluation-header">
+                                <div class="student-info">
+                                    <h3>${evaluation.studentName || 'Sin nombre'}</h3>
+                                    <p><i class="fas fa-calendar"></i> ${date}</p>
+                                    ${evaluation.projectUrl ? `<p><i class="fas fa-link"></i> <a href="${evaluation.projectUrl}" target="_blank">${evaluation.projectUrl}</a></p>` : ''}
+                                </div>
+                                <div class="score-badge ${scoreClass}">
+                                    ${evaluation.score.toFixed(1)}/5.0
+                                </div>
+                            </div>
+                            
+                            <div class="evaluation-details">
+                                <div class="detail-item">
+                                    <strong>Estado</strong>
+                                    ${gradeStatus}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Tildes Faltantes</strong>
+                                    ${evaluation.criteria.tildes.current}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Login Funciona</strong>
+                                    ${evaluation.criteria.loginWorks.current ? '✓ Sí' : '✗ No'}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Registro Funciona</strong>
+                                    ${evaluation.criteria.registerWorks.current ? '✓ Sí' : '✗ No'}
+                                </div>
+                            </div>
+                            
+                            ${evaluation.comments ? `
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                                    <strong>Comentarios:</strong> ${evaluation.comments}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="evaluation-actions">
+                                <button class="btn btn-secondary btn-small" onclick="evaluationHistory.viewDetails('${evaluation.timestamp}')">
+                                    <i class="fas fa-eye"></i> Ver Detalles
+                                </button>
+                                <button class="btn btn-primary btn-small" onclick="evaluationHistory.generateReport('${evaluation.timestamp}')">
+                                    <i class="fas fa-file-alt"></i> Generar Reporte
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="evaluationHistory.deleteEvaluation('${evaluation.timestamp}')">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateStats(evaluations) {
+                if (evaluations.length === 0) {
+                    document.getElementById('statsSection').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('statsSection').style.display = 'grid';
+                
+                const total = evaluations.length;
+                const average = evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / total;
+                const excellent = evaluations.filter(evaluation => evaluation.score >= 4.5).length;
+                const failed = evaluations.filter(evaluation => evaluation.score < 3.0).length;
+
+                document.getElementById('totalEvaluations').textContent = total;
+                document.getElementById('averageScore').textContent = average.toFixed(1);
+                document.getElementById('excellentCount').textContent = excellent;
+                document.getElementById('failedCount').textContent = failed;
+            }
+
+            getScoreClass(score) {
+                if (score >= 4.5) return 'score-excellent';
+                if (score >= 4.0) return 'score-good';
+                if (score >= 3.0) return 'score-regular';
+                return 'score-poor';
+            }
+
+            getGradeStatus(score) {
+                if (score >= 4.5) return 'Excelente';
+                if (score >= 4.0) return 'Bueno';
+                if (score >= 3.5) return 'Satisfactorio';
+                if (score >= 3.0) return 'Regular';
+                return 'Insuficiente';
+            }
+
+            exportAll() {
+                const evaluations = JSON.parse(localStorage.getItem('projectEvaluations') || '[]');
+                if (evaluations.length === 0) {
+                    alert('No hay evaluaciones para exportar');
+                    return;
+                }
+
+                const csvHeader = 'Estudiante,URL,Puntuación,Estado,Tildes,Palabras_Inglés,Sin_Funcionalidad,Logo,Título,Favicon,Diseño,Login,Registro,Campos_Incorrectos,Comentarios,Fecha\n';
+                const csvData = evaluations.map(evaluation => {
+                    return [
+                        evaluation.studentName || '',
+                        evaluation.projectUrl || '',
+                        evaluation.score,
+                        this.getGradeStatus(evaluation.score),
+                        evaluation.criteria.tildes.current,
+                        evaluation.criteria.englishWords.current,
+                        evaluation.criteria.nonFunctional.current,
+                        evaluation.criteria.hasLogo.current ? 'Sí' : 'No',
+                        evaluation.criteria.hasCustomTitle.current ? 'Sí' : 'No',
+                        evaluation.criteria.hasFavicon.current ? 'Sí' : 'No',
+                        evaluation.criteria.hasCustomBackground.current ? 'Sí' : 'No',
+                        evaluation.criteria.loginWorks.current ? 'Sí' : 'No',
+                        evaluation.criteria.registerWorks.current ? 'Sí' : 'No',
+                        evaluation.criteria.wrongFieldTypes.current,
+                        `"${(evaluation.comments || '').replace(/"/g, '""')}"`,
+                        new Date(evaluation.timestamp).toLocaleDateString('es-ES')
+                    ].join(',');
+                }).join('\n');
+
+                const csvContent = csvHeader + csvData;
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Historial_Evaluaciones_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            clearHistory() {
+                if (confirm('¿Está seguro de que desea eliminar TODAS las evaluaciones? Esta acción no se puede deshacer.')) {
+                    localStorage.removeItem('projectEvaluations');
+                    this.loadEvaluations();
+                    alert('Historial eliminado correctamente');
+                }
+            }
+
+            deleteEvaluation(timestamp) {
+                if (confirm('¿Está seguro de que desea eliminar esta evaluación?')) {
+                    const evaluations = JSON.parse(localStorage.getItem('projectEvaluations') || '[]');
+                    const filtered = evaluations.filter(evaluation => evaluation.timestamp !== timestamp);
+                    localStorage.setItem('projectEvaluations', JSON.stringify(filtered));
+                    this.loadEvaluations();
+                }
+            }
+
+            viewDetails(timestamp) {
+                const evaluations = JSON.parse(localStorage.getItem('projectEvaluations') || '[]');
+                const evaluation = evaluations.find(evaluation => evaluation.timestamp === timestamp);
+                
+                if (evaluation) {
+                    const details = `
+Detalles de Evaluación Completa
+=====================================
+
+Estudiante: ${evaluation.studentName || 'No especificado'}
+URL: ${evaluation.projectUrl || 'No especificado'}
+Puntuación: ${evaluation.score.toFixed(1)}/5.0
+Estado: ${this.getGradeStatus(evaluation.score)}
+Fecha: ${new Date(evaluation.timestamp).toLocaleString('es-ES')}
+
+CRITERIOS EVALUADOS:
+- Tildes faltantes: ${evaluation.criteria.tildes.current}
+- Palabras en inglés: ${evaluation.criteria.englishWords.current}
+- Elementos sin funcionalidad: ${evaluation.criteria.nonFunctional.current}
+- Campos con formato incorrecto: ${evaluation.criteria.wrongFieldTypes.current}
+- Logo presente: ${evaluation.criteria.hasLogo.current ? 'Sí' : 'No'}
+- Título personalizado: ${evaluation.criteria.hasCustomTitle.current ? 'Sí' : 'No'}
+- Favicon personalizado: ${evaluation.criteria.hasFavicon.current ? 'Sí' : 'No'}
+- Diseño personalizado: ${evaluation.criteria.hasCustomBackground.current ? 'Sí' : 'No'}
+- Login funciona: ${evaluation.criteria.loginWorks.current ? 'Sí' : 'No'}
+- Registro funciona: ${evaluation.criteria.registerWorks.current ? 'Sí' : 'No'}
+
+COMENTARIOS:
+${evaluation.comments || 'Sin comentarios adicionales'}
+                    `;
+                    alert(details);
+                }
+            }
+
+            generateReport(timestamp) {
+                const evaluations = JSON.parse(localStorage.getItem('projectEvaluations') || '[]');
+                const evaluation = evaluations.find(evaluation => evaluation.timestamp === timestamp);
+                
+                if (evaluation) {
+                    // Crear reporte similar al del evaluador principal
+                    const reportContent = this.generateFullReport(evaluation);
+                    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Reporte_${evaluation.studentName?.replace(/\s+/g, '_') || 'Evaluacion'}_${new Date(evaluation.timestamp).toISOString().split('T')[0]}.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            generateFullReport(evaluation) {
+                return `
+═══════════════════════════════════════════════════════════════
+                    REPORTE DE EVALUACIÓN
+                 Primera Entrega - Login y Register
+═══════════════════════════════════════════════════════════════
+
+INFORMACIÓN DEL PROYECTO:
+▶ Estudiante: ${evaluation.studentName || 'No especificado'}
+▶ URL del Proyecto: ${evaluation.projectUrl || 'No especificado'}
+▶ Fecha de Evaluación: ${new Date(evaluation.timestamp).toLocaleString('es-ES')}
+
+PUNTUACIÓN FINAL: ${evaluation.score.toFixed(1)} / 5.0 puntos
+
+═══════════════════════════════════════════════════════════════
+                      DESGLOSE DETALLADO
+═══════════════════════════════════════════════════════════════
+
+1. ASPECTOS DE CONTENIDO Y FORMATO:
+   • Tildes faltantes: ${evaluation.criteria.tildes.current} (-${(evaluation.criteria.tildes.current * 0.1).toFixed(1)} puntos)
+   • Palabras en inglés: ${evaluation.criteria.englishWords.current} (-${(evaluation.criteria.englishWords.current * 0.1).toFixed(1)} puntos)
+   • Campos con formato incorrecto: ${evaluation.criteria.wrongFieldTypes.current} (-${(evaluation.criteria.wrongFieldTypes.current * 0.1).toFixed(1)} puntos)
+
+2. ELEMENTOS DE DISEÑO:
+   • Logo del proyecto: ${evaluation.criteria.hasLogo.current ? '✓ Presente' : '✗ Ausente (-0.3 puntos)'}
+   • Título personalizado: ${evaluation.criteria.hasCustomTitle.current ? '✓ Presente' : '✗ Ausente (-0.1 puntos)'}
+   • Favicon personalizado: ${evaluation.criteria.hasFavicon.current ? '✓ Presente' : '✗ Ausente (-0.1 puntos)'}
+   • Diseño personalizado: ${evaluation.criteria.hasCustomBackground.current ? '✓ Presente' : '✗ Fondo de plantilla (-0.2 puntos)'}
+
+3. FUNCIONALIDAD (CRÍTICO):
+   • Funcionalidad de Login: ${evaluation.criteria.loginWorks.current ? '✓ Funciona' : '✗ No funciona (-1.0 puntos)'}
+   • Funcionalidad de Registro: ${evaluation.criteria.registerWorks.current ? '✓ Funciona' : '✗ No funciona (-1.0 puntos)'}
+
+4. EXPERIENCIA DE USUARIO:
+   • Elementos sin funcionalidad: ${evaluation.criteria.nonFunctional.current} (-${(evaluation.criteria.nonFunctional.current * 0.2).toFixed(1)} puntos)
+
+═══════════════════════════════════════════════════════════════
+                         RESUMEN
+═══════════════════════════════════════════════════════════════
+
+Puntuación base: 5.0 puntos
+Total de deducciones: -${(5.0 - evaluation.score).toFixed(1)} puntos
+PUNTUACIÓN FINAL: ${evaluation.score.toFixed(1)} puntos
+
+ESTADO: ${this.getGradeStatus(evaluation.score).toUpperCase()}
+
+COMENTARIOS ADICIONALES:
+${evaluation.comments || 'Sin comentarios adicionales'}
+
+═══════════════════════════════════════════════════════════════
+Reporte generado desde el Historial de Evaluaciones
+Web 2 - Sistema de Calificación Automatizado
+═══════════════════════════════════════════════════════════════
+                `;
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            window.evaluationHistory = new EvaluationHistory();
+        });
+    </script>
+</body>
+</html>

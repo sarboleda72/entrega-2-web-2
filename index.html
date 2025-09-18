@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calificador de Proyectos Web - Login y Register</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-clipboard-check"></i>
+                <h1>Calificador de Proyectos</h1>
+            </div>
+            <p class="subtitle">Evaluación de Primera Entrega - Login y Register</p>
+        </header>
+
+        <main class="main-content">
+            <div class="project-info">
+                <h2>Información del Proyecto</h2>
+                <div class="form-group">
+                    <label for="studentName">Nombre del Estudiante:</label>
+                    <input type="text" id="studentName" placeholder="Ingrese el nombre del estudiante">
+                </div>
+                <div class="form-group">
+                    <label for="projectUrl">URL del Proyecto:</label>
+                    <input type="url" id="projectUrl" placeholder="https://ejemplo.com">
+                </div>
+            </div>
+
+            <div class="evaluation-section">
+                <h2>Criterios de Evaluación</h2>
+                <div class="criteria-group-title">Criterios Generales</div>
+                <div class="score-display" id="scoreDisplay">
+                    <span class="current-score">Nota Actual: <span id="currentScore">5.00</span></span>
+                    <span class="max-score">/ 5.0</span>
+                </div>
+
+                <div class="criteria-list">
+                    <!-- Tildes -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-language"></i> Tildes y Acentos</h3>
+                            <span class="penalty">(-0.1 por cada tilde faltante)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="input-group">
+                                <label>Número de tildes faltantes:</label>
+                                <input type="number" id="tildes" min="0" value="0" class="number-input">
+                            </div>
+                            <div class="deduction">Descuento: <span id="tildesDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Palabras en inglés -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-globe"></i> Idioma Español</h3>
+                            <span class="penalty">(-0.1 por cada palabra en inglés)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="input-group">
+                                <label>Número de palabras en inglés:</label>
+                                <input type="number" id="englishWords" min="0" value="0" class="number-input">
+                            </div>
+                            <div class="deduction">Descuento: <span id="englishDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Elementos sin funcionalidad -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-mouse-pointer"></i> Funcionalidad de Elementos</h3>
+                            <span class="penalty">(-0.2 por cada elemento sin función)</span>
+                                <span class="penalty">(-0.1 por cada elemento sin función)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="input-group">
+                                <label>Elementos sin funcionalidad (botones, enlaces, etc.):</label>
+                                <input type="number" id="nonFunctional" min="0" value="0" class="number-input">
+                            </div>
+                            <div class="deduction">Descuento: <span id="nonFunctionalDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Logo -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-image"></i> Presencia de Logo</h3>
+                            <span class="penalty">(-0.1 si no tiene logo)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasLogo" checked>
+                                    <span class="checkmark"></span>
+                                    El proyecto tiene logo
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="logoDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Título de página -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-heading"></i> Título de Página Personalizado</h3>
+                            <span class="penalty">(-0.1 si no cambió el título)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasCustomTitle" checked>
+                                    <span class="checkmark"></span>
+                                    Tiene título personalizado (no genérico)
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="titleDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Icono del proyecto -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-star"></i> Icono del Proyecto (Favicon)</h3>
+                            <span class="penalty">(-0.1 si no tiene favicon)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasFavicon" checked>
+                                    <span class="checkmark"></span>
+                                    Tiene icono personalizado del proyecto
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="faviconDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Fondo personalizado -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-palette"></i> Diseño Personalizado</h3>
+                            <span class="penalty">(-0.3 si usa el mismo fondo de plantilla)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasCustomBackground" checked>
+                                    <span class="checkmark"></span>
+                                    Tiene diseño/fondo personalizado
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="backgroundDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+
+                    <div class="criteria-group-title">Login y Register (20%)</div>
+                    <!-- Funcionalidad Login -->
+                    <div class="criterion critical">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-sign-in-alt"></i> Funcionalidad de Login</h3>
+                            <span class="penalty critical">(-0.5 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="loginWorks" checked>
+                                    <span class="checkmark"></span>
+                                    El login funciona correctamente
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="loginDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                    <!-- Funcionalidad Register -->
+                    <div class="criterion critical">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-user-plus"></i> Funcionalidad de Registro</h3>
+                            <span class="penalty critical">(-0.5 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="registerWorks" checked>
+                                    <span class="checkmark"></span>
+                                    El registro funciona correctamente
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="registerDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <div class="criteria-group-title">Funcionalidades de Usuario (35%)</div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-list"></i> Listar Usuario</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="listarUsuario" checked>
+                                    <span class="checkmark"></span>
+                                    Puede listar usuario
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="listarUsuarioDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-plus-circle"></i> Crear Usuario</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="crearUsuario" checked>
+                                    <span class="checkmark"></span>
+                                    Puede crear usuario
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="crearUsuarioDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-edit"></i> Actualizar Usuario</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="actualizarUsuario" checked>
+                                    <span class="checkmark"></span>
+                                    Puede actualizar usuario
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="actualizarUsuarioDeduction">0.0</span> puntos
+                            </div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-trash"></i> Eliminar Usuario</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="eliminarUsuario" checked>
+                                    <span class="checkmark"></span>
+                                    Puede eliminar usuario
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="eliminarUsuarioDeduction">0.0</span> puntos
+                            </div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-search"></i> Buscar Usuario (SQL)</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="buscarUsuario" checked>
+                                    <span class="checkmark"></span>
+                                    Puede buscar usuario (SQL)
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="buscarUsuarioDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <div class="criteria-group-title">Módulo 2 Implementado (35%)</div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-list"></i> Listar Módulo 2</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="listarModulo2" checked>
+                                    <span class="checkmark"></span>
+                                    Puede listar en módulo 2
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="listarModulo2Deduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-plus-circle"></i> Crear Módulo 2</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="crearModulo2" checked>
+                                    <span class="checkmark"></span>
+                                    Puede crear en módulo 2
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="crearModulo2Deduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-edit"></i> Actualizar Módulo 2</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="actualizarModulo2" checked>
+                                    <span class="checkmark"></span>
+                                    Puede actualizar en módulo 2
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="actualizarModulo2Deduction">0.0</span> puntos
+                            </div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-trash"></i> Eliminar Módulo 2</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="eliminarModulo2" checked>
+                                    <span class="checkmark"></span>
+                                    Puede eliminar en módulo 2
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="eliminarModulo2Deduction">0.0</span> puntos
+                            </div>
+                        </div>
+                    </div>
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-search"></i> Buscar Módulo 2 (SQL)</h3>
+                            <span class="penalty">(-0.35 si no funciona)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="buscarModulo2" checked>
+                                    <span class="checkmark"></span>
+                                    Puede buscar en módulo 2 (SQL)
+                                </label>
+                            </div>
+                            <div class="deduction">Descuento: <span id="buscarModulo2Deduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+
+                    <!-- Formato de campos -->
+                    <div class="criterion">
+                        <div class="criterion-header">
+                            <h3><i class="fas fa-keyboard"></i> Formato de Campos de Texto</h3>
+                            <span class="penalty">(-0.1 por campo con formato incorrecto)</span>
+                        </div>
+                        <div class="criterion-content">
+                            <div class="input-group">
+                                <label>Campos con formato incorrecto (email como texto, etc.):</label>
+                                <input type="number" id="wrongFieldTypes" min="0" value="0" class="number-input">
+                            </div>
+                            <div class="deduction">Descuento: <span id="fieldTypeDeduction">0.0</span> puntos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comments-section">
+                <h3><i class="fas fa-comment"></i> Comentarios Adicionales</h3>
+                <textarea id="comments" placeholder="Agregue comentarios adicionales sobre la evaluación..."></textarea>
+            </div>
+
+            <div class="actions">
+                <button id="resetBtn" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Reiniciar
+                </button>
+                <button id="configBtn" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> Configuración
+                </button>
+                <a href="historial.html" class="btn btn-primary">
+                    <i class="fas fa-history"></i> Ver Historial
+                </a>
+                <button id="generateReportBtn" class="btn btn-primary">
+                    <i class="fas fa-file-alt"></i> Generar Reporte
+                </button>
+                <button id="saveBtn" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar Evaluación
+                </button>
+            </div>
+        </main>
+
+        <div id="reportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Reporte de Evaluación</h3>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="reportContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="copyReportBtn" class="btn btn-primary">
+                        <i class="fas fa-copy"></i> Copiar Reporte
+                    </button>
+                    <button id="downloadReportBtn" class="btn btn-success">
+                        <i class="fas fa-download"></i> Descargar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="configModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Configuración del Sistema</h3>
+                    <span class="close-config">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="config-section">
+                        <h4><i class="fas fa-download"></i> Descarga Automática</h4>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoDownloadEnabled">
+                                <span class="checkmark"></span>
+                                Descargar automáticamente archivo de log al guardar evaluaciones
+                            </label>
+                        </div>
+                        <p class="config-description">
+                            Cuando esté habilitado, se descargará automáticamente un archivo .txt
+                            con el registro de todas las evaluaciones del día cada vez que guardes una evaluación.
+                        </p>
+                    </div>
+
+                    <div class="config-section">
+                        <h4><i class="fas fa-file-export"></i> Gestión de Archivos</h4>
+                        <div class="config-actions">
+                            <button id="downloadTodayLogBtn" class="btn btn-primary btn-small">
+                                <i class="fas fa-calendar-day"></i> Descargar Log de Hoy
+                            </button>
+                            <button id="clearTodayLogBtn" class="btn btn-secondary btn-small">
+                                <i class="fas fa-eraser"></i> Limpiar Log del Día
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h4><i class="fas fa-info-circle"></i> Información</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Evaluaciones Guardadas:</strong>
+                                <span id="totalSavedEvaluations">0</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Espacio Usado:</strong>
+                                <span id="storageUsed">0 KB</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Última Evaluación:</strong>
+                                <span id="lastEvaluationDate">Nunca</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveConfigBtn" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
